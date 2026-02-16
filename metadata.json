@@ -1,0 +1,8 @@
+{
+  "name": "AUREXIA",
+  "description": "Premium AI-powered numismatic application for the identification, analysis, and 3D visualization of ancient Iberian and Roman coins.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
