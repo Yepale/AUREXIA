@@ -30,6 +30,13 @@ export interface PhysicalEstimate {
   material: string;
 }
 
+const stripBase64Prefix = (base64: string) => {
+  if (base64.startsWith('data:')) {
+    return base64.split(',')[1];
+  }
+  return base64;
+};
+
 /**
  * Estimates physical properties using Gemini 3 Flash Vision.
  */
@@ -38,7 +45,11 @@ export const estimatePhysicalProperties = async (
   reverseBase64: string
 ): Promise<PhysicalEstimate> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const obverseData = stripBase64Prefix(obverseBase64);
+    const reverseData = stripBase64Prefix(reverseBase64);
     
     const prompt = `Analiza estas imágenes de una moneda antigua (Anverso y Reverso). 
     Basándote en el desgaste, la pátina, el estilo iconográfico y el tipo de ceca probable, estima:
@@ -53,8 +64,8 @@ export const estimatePhysicalProperties = async (
       model: 'gemini-3-flash-preview',
       contents: {
         parts: [
-          { inlineData: { mimeType: 'image/png', data: obverseBase64 } },
-          { inlineData: { mimeType: 'image/png', data: reverseBase64 } },
+          { inlineData: { mimeType: 'image/png', data: obverseData } },
+          { inlineData: { mimeType: 'image/png', data: reverseData } },
           { text: prompt }
         ]
       },
@@ -89,7 +100,11 @@ export const identifyCoin = async (
   material?: string
 ): Promise<IdentificationResult> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const obverseData = stripBase64Prefix(obverseBase64);
+    const reverseData = stripBase64Prefix(reverseBase64);
     
     const systemPrompt = `Eres AUREXIA, el experto numismático de clase mundial especializado en moneda Antigua Ibérica y Romana.
     Analiza las imágenes para identificar la pieza con precisión absoluta.
@@ -105,11 +120,11 @@ export const identifyCoin = async (
     IMPORTANTE: Devuelve ÚNICAMENTE un objeto JSON válido.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3.1-pro-preview',
       contents: {
         parts: [
-          { inlineData: { mimeType: 'image/png', data: obverseBase64 } },
-          { inlineData: { mimeType: 'image/png', data: reverseBase64 } },
+          { inlineData: { mimeType: 'image/png', data: obverseData } },
+          { inlineData: { mimeType: 'image/png', data: reverseData } },
           { text: `Identifica esta moneda. Metrología: Peso: ${weight || 'N/A'}g, Diámetro: ${diameter || 'N/A'}mm, Material: ${material || 'N/A'}.` }
         ]
       },
@@ -163,7 +178,8 @@ export const expandCoinDescription = async (
   lang: string = 'ES'
 ): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `Como arqueólogo e historiador premium de AUREXIA, expande la descripción de esta moneda: ${coin.name}. 
     Periodo: ${coin.period}. Civilización: ${coin.civilization}.
     
@@ -189,7 +205,8 @@ export const generateHistoricalScene = async (
   coin: Partial<CoinData>
 ): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `A cinematic, ultra-detailed historical reconstruction of the ancient environment of ${coin.civilization} during the ${coin.period}. The scene should evoke the atmosphere where the ${coin.name} was used. 16:9, masterwork, highly atmospheric.`;
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -215,7 +232,10 @@ export const generateCoinVideo = async (
   onStatusUpdate?: (msg: string) => void
 ): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const obverseData = stripBase64Prefix(obverseBase64);
     
     onStatusUpdate?.("Iniciando reconstrucción cinematográfica...");
     
@@ -225,7 +245,7 @@ export const generateCoinVideo = async (
       model: 'veo-3.1-fast-generate-preview',
       prompt: prompt,
       image: {
-        imageBytes: obverseBase64,
+        imageBytes: obverseData,
         mimeType: 'image/png'
       },
       config: {
@@ -253,7 +273,7 @@ export const generateCoinVideo = async (
     const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
     if (!downloadLink) throw new Error("Video generation failed");
     
-    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+    const response = await fetch(`${downloadLink}&key=${apiKey}`);
     const blob = await response.blob();
     return URL.createObjectURL(blob);
   });

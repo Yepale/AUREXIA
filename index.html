@@ -24,6 +24,8 @@
             --text-dim: rgba(240, 240, 240, 0.4);
             --bg-gradient: radial-gradient(circle at center, #1a170e 0%, #050505 100%);
             --shadow-premium: 0 10px 40px rgba(0,0,0,0.5);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         .light-mode {
@@ -35,6 +37,26 @@
             --bg-gradient: radial-gradient(circle at center, #ffffff 0%, #f4f4ef 100%);
             --shadow-premium: 0 12px 45px rgba(139, 115, 85, 0.18);
         }
+
+        /* Mobile Optimization Utilities */
+        @media (max-width: 640px) {
+            .mobile-compact {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            .mobile-text-xs {
+                font-size: 0.7rem !important;
+            }
+            .mobile-h-12 {
+                height: 3rem !important;
+                width: 3rem !important;
+            }
+        }
+
+        .pt-safe { padding-top: calc(var(--safe-top) + 1rem); }
+        .pb-safe { padding-bottom: calc(var(--safe-bottom) + 1rem); }
+        .mt-safe { margin-top: var(--safe-top); }
+        .mb-safe { margin-bottom: var(--safe-bottom); }
 
         /* Improved Light Mode Overrides for Tailwind Utility Classes */
         .light-mode .text-white { color: #1a1a17 !important; }
@@ -184,6 +206,49 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
+
+        .animate-spin-slow {
+            animation: spin 8s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Map & Marker Animations */
+        @keyframes marker-pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+          70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(251, 191, 36, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        .marker-active {
+          animation: marker-pulse 2s infinite;
+          border-color: #fbbf24 !important;
+          z-index: 1000 !important;
+        }
+        @keyframes slide-up {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-5px); }
+          100% { transform: translateY(0px); }
+        }
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
     </style>
 <script type="importmap">
 {
@@ -199,6 +264,7 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <div id="root"></div>
@@ -211,5 +277,6 @@
             });
         }
     </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

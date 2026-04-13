@@ -47,7 +47,8 @@ export const LiveExpert: React.FC<LiveExpertProps> = ({ coinName, onClose }) => 
   };
 
   useEffect(() => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
     const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
     const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
     audioContextRef.current = inputCtx;
@@ -77,26 +78,30 @@ export const LiveExpert: React.FC<LiveExpertProps> = ({ coinName, onClose }) => 
                   data: encode(new Uint8Array(int16.buffer)),
                   mimeType: 'audio/pcm;rate=16000',
                 };
-                sessionPromise.then(s => s.sendRealtimeInput({ media: pcmBlob }));
+                sessionPromise.then(s => s.sendRealtimeInput({ audio: pcmBlob })).catch(err => console.error("Error sending input", err));
               };
               source.connect(scriptProcessor);
               scriptProcessor.connect(inputCtx.destination);
             },
             onmessage: async (message: LiveServerMessage) => {
-              const audioBase64 = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
-              if (audioBase64) {
-                nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputCtx.currentTime);
-                const audioBuffer = await decodeAudioData(decode(audioBase64), outputCtx, 24000, 1);
-                const source = outputCtx.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(outputCtx.destination);
-                source.start(nextStartTimeRef.current);
-                nextStartTimeRef.current += audioBuffer.duration;
-                sourcesRef.current.add(source);
-              }
-              if (message.serverContent?.outputTranscription) {
-                const text = message.serverContent.outputTranscription.text;
-                setTranscription(prev => [...prev.slice(-4), text]);
+              try {
+                const audioBase64 = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+                if (audioBase64) {
+                  nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputCtx.currentTime);
+                  const audioBuffer = await decodeAudioData(decode(audioBase64), outputCtx, 24000, 1);
+                  const source = outputCtx.createBufferSource();
+                  source.buffer = audioBuffer;
+                  source.connect(outputCtx.destination);
+                  source.start(nextStartTimeRef.current);
+                  nextStartTimeRef.current += audioBuffer.duration;
+                  sourcesRef.current.add(source);
+                }
+                if (message.serverContent?.outputTranscription) {
+                  const text = message.serverContent.outputTranscription.text;
+                  setTranscription(prev => [...prev.slice(-4), text]);
+                }
+              } catch (msgErr) {
+                console.error("Error processing message", msgErr);
               }
             },
             onerror: (e) => { console.error("Live Error", e); setStatus('closed'); },
@@ -111,7 +116,7 @@ export const LiveExpert: React.FC<LiveExpertProps> = ({ coinName, onClose }) => 
         });
         session = await sessionPromise;
       } catch (e) {
-        console.error(e);
+        console.error("Connection failed", e);
         setStatus('closed');
       }
     };
@@ -158,7 +163,12 @@ export const LiveExpert: React.FC<LiveExpertProps> = ({ coinName, onClose }) => 
                 ))}
               </div>
             ) : (
-              <Loader2 className="text-amber-400 animate-spin" size={60} />
+              <div className="relative flex items-center justify-center">
+                <div className="absolute w-full h-full rounded-full border-2 border-amber-400/30 animate-ping" />
+                <div className="absolute w-full h-full rounded-full border-2 border-amber-400/20 animate-ping" style={{ animationDelay: '0.5s' }} />
+                <div className="absolute w-full h-full rounded-full border-2 border-amber-400/10 animate-ping" style={{ animationDelay: '1s' }} />
+                <Loader2 className="text-amber-400 animate-spin" size={60} />
+              </div>
             )}
           </div>
         </div>

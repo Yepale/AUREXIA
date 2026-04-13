@@ -12,7 +12,7 @@ import {
   Fingerprint, Weight, Diameter, MapPin,
   Trash2, Edit3, Award, Download, Image, RefreshCw, Key,
   Eye, EyeOff, Bell, Database, X, LayoutGrid, List, Music, ArrowRight, Lock,
-  MousePointer2, Navigation, Crosshair
+  MousePointer2, Navigation, Crosshair, Plus, Loader2
 } from 'lucide-react';
 
 export {
@@ -27,7 +27,7 @@ export {
   Fingerprint, Weight, Diameter, MapPin,
   Trash2, Edit3, Award, Download, Image, RefreshCw, Key,
   Eye, EyeOff, Bell, Database, X, LayoutGrid, List, Music, ArrowRight, Lock,
-  MousePointer2, Navigation, Crosshair
+  MousePointer2, Navigation, Crosshair, Plus, Loader2
 };
 
 export const AurexiaLogo = ({ size = 24, className = "", onClick }: { size?: number, className?: string, onClick?: () => void }) => (

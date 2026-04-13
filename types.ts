@@ -33,6 +33,8 @@ export interface CoinData {
   weight?: number;
   diameter?: number;
   estimatedValue?: string;
+  mint?: string;
+  rarity?: string;
   location?: {
     lat: number;
     lng: number;
